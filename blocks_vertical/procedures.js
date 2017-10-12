@@ -28,60 +28,23 @@ goog.provide('Blockly.Blocks.procedures');
 goog.require('Blockly.Blocks');
 goog.require('Blockly.constants');
 
+
 Blockly.Blocks['procedures_defnoreturn'] = {
   /**
    * Block for defining a procedure with no return value.
    * @this Blockly.Block
    */
   init: function() {
-    this.appendDummyInput()
-        .appendField(new Blockly.FieldLabel(), 'procCode');
-    this.appendDummyInput()
-        .appendField(new Blockly.FieldLabel(), 'argumentNames');
-    this.appendDummyInput()
-        .appendField(new Blockly.FieldLabel(), 'argumentDefaults');
-    this.appendDummyInput()
-        .appendField(new Blockly.FieldLabel(), 'warp');
-    this.setCategory(Blockly.Categories.more);
-    this.setColour(Blockly.Colours.more.primary,
-      Blockly.Colours.more.secondary,
-      Blockly.Colours.more.tertiary);
-    this.setNextStatement(true);
-
-    /* Data known about the procedure. */
-    this._procCode = '';
-    this._argumentNames = [];
-    this._argumentDefaults = [];
-    this._warp = false;
-  },
-  mutationToDom: function() {
-    var container = document.createElement('mutation');
-    var procCode = document.createElement('proccode');
-    procCode.setAttribute('value', this._procCode);
-    container.appendChild(procCode);
-    var argumentNames = document.createElement('argumentnames');
-    argumentNames.setAttribute('value', JSON.stringify(this._argumentNames));
-    container.appendChild(argumentNames);
-    var argumentDefaults = document.createElement('argumentdefaults');
-    argumentDefaults.setAttribute('value', JSON.stringify(this._argumentDefaults));
-    container.appendChild(argumentDefaults);
-    var warp = document.createElement('warp');
-    warp.setAttribute('value', this._warp);
-    container.appendChild(warp);
-    return container;
-  },
-  domToMutation: function(xmlElement) {
-    this._procCode = xmlElement.getAttribute('proccode');
-    this._argumentNames =  JSON.parse(xmlElement.getAttribute('argumentnames'));
-    this._argumentValues =  JSON.parse(xmlElement.getAttribute('argumentvalues'));
-    this._warp = xmlElement.getAttribute('warp');
-    this._updateDisplay();
-  },
-  _updateDisplay: function() {
-    this.setFieldValue(this._procCode, 'procCode');
-    this.setFieldValue(this._argumentNames, 'argumentNames');
-    this.setFieldValue(this._argumentDefaults, 'argumentDefaults');
-    this.setFieldValue(this._warp, 'warp');
+    this.jsonInit({
+      "message0": "define %1",
+      "args0": [
+        {
+          "type": "input_statement",
+          "name": "custom_block"
+        }
+      ],
+      "extensions": ["colours_more", "shape_hat"]
+    });
   }
 };
 
@@ -159,6 +122,95 @@ Blockly.Blocks['procedures_callnoreturn'] = {
     }
   }
 };
+Blockly.Blocks['procedures_callnoreturn_internal'] = {
+  /**
+   * Block for calling a procedure with no return value, for rendering inside
+   * define block.
+   * @this Blockly.Block
+   */
+  init: function() {
+    this.setPreviousStatement(true);
+    this.setNextStatement(true);
+    this.setCategory(Blockly.Categories.more);
+    this.setColour(Blockly.Colours.more.primary,
+      Blockly.Colours.more.secondary,
+      Blockly.Colours.more.tertiary);
+
+    /* Data known about the procedure. */
+    this.procCode_ = '';
+    this.argumentNames_ = [];
+    this.argumentDefaults_ = [];
+    this.warp_ = false;
+  },
+  /**
+   * Create XML to represent the (non-editable) name and arguments.
+   * @return {!Element} XML storage element.
+   * @this Blockly.Block
+   */
+  mutationToDom: function() {
+
+    var container = document.createElement('mutation');
+    container.setAttribute('proccode', this.procCode_);
+    container.setAttribute('argumentnames', JSON.stringify(this.argumentNames_));
+    container.setAttribute('argumentdefaults', JSON.stringify(this.argumentDefaults_));
+    container.setAttribute('warp', this.warp_);
+    return container;
+  },
+  /**
+   * Parse XML to restore the (non-editable) name and parameters.
+   * @param {!Element} xmlElement XML storage element.
+   * @this Blockly.Block
+   */
+  domToMutation: function(xmlElement) {
+    this.procCode_ = xmlElement.getAttribute('proccode');
+    this.argumentNames_ =  JSON.parse(xmlElement.getAttribute('argumentnames'));
+    this.argumentDefaults_ =  JSON.parse(xmlElement.getAttribute('argumentdefaults'));
+    this.warp_ = xmlElement.getAttribute('warp');
+    this.updateDisplay_();
+
+  },
+  updateDisplay_: function() {
+    // Split the proc into components, by %n, %b, and %s (ignoring escaped).
+    var procComponents = this.procCode_.split(/(?=[^\\]\%[nbs])/);
+    procComponents = procComponents.map(function(c) {
+      return c.trim(); // Strip whitespace.
+    });
+    // Create inputs and shadow blocks as appropriate.
+    var inputPrefix = 'input';
+    var inputCount = 0;
+    for (var i = 0, component; component = procComponents[i]; i++) {
+      var newLabel;
+      if (component.substring(0, 1) == '%') {
+        var inputType = component.substring(1, 2);
+        newLabel = component.substring(2).trim();
+        var inputName = inputPrefix + inputCount;
+        var blockType = '';
+        switch (inputType) {
+          case 'n':
+            blockType = 'argument_reporter_string_number';
+            break;
+          case 'b':
+            blockType = 'argument_reporter_boolean';
+            break;
+          case 's':
+            blockType = 'argument_reporter_string_number';
+            break;
+        }
+        if (blockType) {
+          var input = this.appendValueInput(inputName);
+          var newBlock = this.workspace.newBlock(blockType);
+          newBlock.setShadow(true);
+          newBlock.setFieldValue(this.argumentNames_[inputCount], "VALUE");
+          newBlock.outputConnection.connect(input.connection);
+        }
+        inputCount++;
+      } else {
+        newLabel = component.trim();
+      }
+      this.appendDummyInput().appendField(newLabel.replace(/\\%/, '%'));
+    }
+  }
+};
 
 Blockly.Blocks['procedures_param'] = {
   /**
@@ -214,5 +266,35 @@ Blockly.Blocks['procedures_param'] = {
         this.setOutput(true, 'String');
         break;
     }
+  }
+};
+
+Blockly.Blocks['argument_reporter_boolean'] = {
+  init: function() {
+    this.jsonInit({ "message0": " %1",
+      "args0": [
+        {
+          "type": "field_label_editable",
+          "name": "VALUE",
+          "text": ""
+        }
+      ],
+      "extensions": ["colours_more", "output_boolean"]
+    });
+  }
+};
+
+Blockly.Blocks['argument_reporter_string_number'] = {
+  init: function() {
+    this.jsonInit({ "message0": " %1",
+      "args0": [
+        {
+          "type": "field_label_editable",
+          "name": "VALUE",
+          "text": ""
+        }
+      ],
+      "extensions": ["colours_more", "output_number", "output_string"]
+    });
   }
 };

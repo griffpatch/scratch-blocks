@@ -32,9 +32,17 @@ goog.provide('Blockly.Variables');
 
 goog.require('Blockly.Blocks');
 goog.require('Blockly.constants');
+goog.require('Blockly.VariableModel');
 goog.require('Blockly.Workspace');
 goog.require('goog.string');
 
+
+/**
+ * Constant to separate variable names from procedures and generated functions
+ * when running generators.
+ * @deprecated Use Blockly.VARIABLE_CATEGORY_NAME
+ */
+Blockly.Variables.NAME_TYPE = Blockly.VARIABLE_CATEGORY_NAME;
 
 /**
  * Find all user-created variables that are in use in the workspace.
@@ -83,7 +91,7 @@ Blockly.Variables.allUsedVariables = function(root) {
  * Find all variables that the user has created through the workspace or
  * toolbox.  For use by generators.
  * @param {!Blockly.Workspace} root The workspace to inspect.
- * @return {!Array.<string>} Array of variable names.
+ * @return {!Array.<Blockly.VariableModel>} Array of variable models.
  */
 Blockly.Variables.allVariables = function(root) {
   if (root instanceof Blockly.Block) {
@@ -91,112 +99,9 @@ Blockly.Variables.allVariables = function(root) {
     console.warn('Deprecated call to Blockly.Variables.allVariables ' +
                  'with a block instead of a workspace.  You may want ' +
                  'Blockly.Variables.allUsedVariables');
+    return {};
   }
-  return root.variableList;
-};
-
-/**
- * Construct the blocks required by the flyout for the variable category.
- * @param {!Blockly.Workspace} workspace The workspace contianing variables.
- * @return {!Array.<!Element>} Array of XML block elements.
- */
-Blockly.Variables.flyoutCategory = function(workspace) {
-  var variableList = workspace.variableList;
-  variableList.sort(goog.string.caseInsensitiveCompare);
-
-  var xmlList = [];
-  var button = goog.dom.createDom('button');
-  button.setAttribute('text', Blockly.Msg.NEW_VARIABLE);
-  button.setAttribute('callbackKey', 'CREATE_VARIABLE');
-
-  workspace.registerButtonCallback('CREATE_VARIABLE', function(button) {
-    Blockly.Variables.createVariable(button.getTargetWorkspace());
-  });
-
-  xmlList.push(button);
-
-
-  for (var i = 0; i < variableList.length; i++) {
-    if (Blockly.Blocks['data_variable']) {
-      // <block type="data_variable">
-      //    <field name="VARIABLE">variablename</field>
-      // </block>
-      var block = goog.dom.createDom('block');
-      block.setAttribute('type', 'data_variable');
-      block.setAttribute('gap', 8);
-
-      var field = goog.dom.createDom('field', null, variableList[i]);
-      field.setAttribute('name', 'VARIABLE');
-      block.appendChild(field);
-
-      xmlList.push(block);
-    }
-  }
-
-  if (xmlList.length > 1) { // The button is always there.
-    xmlList[xmlList.length - 1].setAttribute('gap', 24);
-
-    if (Blockly.Blocks['data_setvariableto']) {
-      // <block type="data_setvariableto" gap="20">
-      //   <value name="VARIABLE">
-      //    <shadow type="data_variablemenu"></shadow>
-      //   </value>
-      //   <value name="VALUE">
-      //     <shadow type="text">
-      //       <field name="TEXT">0</field>
-      //     </shadow>
-      //   </value>
-      // </block>
-      var block = goog.dom.createDom('block');
-      block.setAttribute('type', 'data_setvariableto');
-      block.setAttribute('gap', 8);
-      block.appendChild(Blockly.Variables.createVariableDom_(variableList[0]));
-      block.appendChild(Blockly.Variables.createTextDom_());
-      xmlList.push(block);
-    }
-    if (Blockly.Blocks['data_changevariableby']) {
-      // <block type="data_changevariableby">
-      //   <value name="VARIABLE">
-      //    <shadow type="data_variablemenu"></shadow>
-      //   </value>
-      //   <value name="VALUE">
-      //     <shadow type="math_number">
-      //       <field name="NUM">0</field>
-      //     </shadow>
-      //   </value>
-      // </block>
-      var block = goog.dom.createDom('block');
-      block.setAttribute('type', 'data_changevariableby');
-      block.setAttribute('gap', 8);
-      block.appendChild(Blockly.Variables.createVariableDom_(variableList[0]));
-      block.appendChild(Blockly.Variables.createMathNumberDom_());
-      xmlList.push(block);
-    }
-    if (Blockly.Blocks['data_showvariable']) {
-      // <block type="data_showvariable">
-      //   <value name="VARIABLE">
-      //     <shadow type="data_variablemenu"></shadow>
-      //   </value>
-      // </block>
-      var block = goog.dom.createDom('block');
-      block.setAttribute('type', 'data_showvariable');
-      block.setAttribute('gap', 8);
-      block.appendChild(Blockly.Variables.createVariableDom_(variableList[0]));
-      xmlList.push(block);
-    }
-    if (Blockly.Blocks['data_hidevariable']) {
-      // <block type="data_showvariable">
-      //   <value name="VARIABLE">
-      //     <shadow type="data_variablemenu"></shadow>
-      //   </value>
-      // </block>
-      var block = goog.dom.createDom('block');
-      block.setAttribute('type', 'data_hidevariable');
-      block.appendChild(Blockly.Variables.createVariableDom_(variableList[0]));
-      xmlList.push(block);
-    }
-  }
-  return xmlList;
+  return root.getAllVariables();
 };
 
 /**
@@ -223,24 +128,19 @@ Blockly.Variables.createShadowDom_ = function(type) {
 };
 
 /**
- * Create a dom element for value tag with a shadow variable inside.
- * @param {string} name The name of the variable to select.
+ * Create a dom element for variable.
+ * @param {Blockly.VariableModel} variableModel The variable to use.
  * @return {!Element} An XML element.
  */
-Blockly.Variables.createVariableDom_ = function(name) {
-  //   <value name="VARIABLE">
-  //     <shadow type="data_variablemenu">
-  //       <field name="VARIABLE">variablename
-  //       </field>
-  //     </shadow>
-  //   </value>
-  var value = Blockly.Variables.createValueDom_('VARIABLE');
-  var shadow = Blockly.Variables.createShadowDom_('data_variablemenu');
-  var field = goog.dom.createDom('field', null, name);
+Blockly.Variables.createVariableDom_ = function(variableModel) {
+  // <field name="VARIABLE">
+  //   variablename
+  // </field>
+  var field = goog.dom.createDom('field', null, variableModel.name);
   field.setAttribute('name', 'VARIABLE');
-  shadow.appendChild(field);
-  value.appendChild(shadow);
-  return value;
+  field.setAttribute('variableType', variableModel.type);
+  field.setAttribute('id', variableModel.getId());
+  return field;
 };
 
 /**
@@ -300,7 +200,7 @@ Blockly.Variables.noVariableText = function() {
 * @return {string} New variable name.
 */
 Blockly.Variables.generateUniqueName = function(workspace) {
-  var variableList = workspace.variableList;
+  var variableList = workspace.getAllVariables();
   var newName = '';
   if (variableList.length) {
     var nameSuffix = 1;
@@ -310,7 +210,7 @@ Blockly.Variables.generateUniqueName = function(workspace) {
     while (!newName) {
       var inUse = false;
       for (var i = 0; i < variableList.length; i++) {
-        if (variableList[i].toLowerCase() == potName) {
+        if (variableList[i].name.toLowerCase() == potName) {
           // This potential name is already used.
           inUse = true;
           break;
@@ -347,22 +247,88 @@ Blockly.Variables.generateUniqueName = function(workspace) {
  * @param {function(?string=)=} opt_callback A callback. It will
  *     be passed an acceptable new variable name, or null if change is to be
  *     aborted (cancel button), or undefined if an existing variable was chosen.
+ * @param {string} opt_type Optional type of variable, like 'string' or 'list'.
  */
-Blockly.Variables.createVariable = function(workspace, opt_callback) {
+Blockly.Variables.createVariable = function(workspace, opt_callback, opt_type) {
+  // This function needs to be named so it can be called recursively.
   var promptAndCheckWithAlert = function(defaultName) {
     Blockly.Variables.promptName(Blockly.Msg.NEW_VARIABLE_TITLE, defaultName,
       function(text) {
         if (text) {
-          if (workspace.variableIndexOf(text) != -1) {
+          if (workspace.getVariable(text)) {
             Blockly.alert(Blockly.Msg.VARIABLE_ALREADY_EXISTS.replace('%1',
                 text.toLowerCase()),
                 function() {
                   promptAndCheckWithAlert(text);  // Recurse
                 });
-          } else {
-            workspace.createVariable(text);
+          }
+          else if (!Blockly.Procedures.isNameUsed(text, workspace)) {
+            Blockly.alert(Blockly.Msg.PROCEDURE_ALREADY_EXISTS.replace('%1',
+                text.toLowerCase()),
+                function() {
+                  promptAndCheckWithAlert(text);  // Recurse
+                });
+          }
+          else {
+            var variable = workspace.createVariable(text, opt_type);
+
+            var flyout = workspace.getFlyout();
+            var variableBlockId = variable.getId();
+            if (flyout.setCheckboxState) {
+              flyout.setCheckboxState(variableBlockId, true);
+            }
+
             if (opt_callback) {
               opt_callback(text);
+            }
+          }
+        } else {
+          // User canceled prompt without a value.
+          if (opt_callback) {
+            opt_callback(null);
+          }
+        }
+      });
+  };
+  promptAndCheckWithAlert('');
+};
+
+/**
+ * Rename a variable with the given workspace, variableType, and oldName.
+ * @param {!Blockly.Workspace} workspace The workspace on which to rename the
+ *     variable.
+ * @param {?Blockly.VariableModel} variable Variable to rename.
+ * @param {function(?string=)=} opt_callback A callback. It will
+ *     be passed an acceptable new variable name, or null if change is to be
+ *     aborted (cancel button), or undefined if an existing variable was chosen.
+ */
+Blockly.Variables.renameVariable = function(workspace, variable,
+  opt_callback) {
+  // This function needs to be named so it can be called recursively.
+  var promptAndCheckWithAlert = function(defaultName) {
+    Blockly.Variables.promptName(
+      Blockly.Msg.RENAME_VARIABLE_TITLE.replace('%1', variable.name), defaultName,
+      function(newName) {
+        if (newName) {
+          var newVariable = workspace.getVariable(newName);
+          if (newVariable && newVariable.type != variable.type) {
+            Blockly.alert(Blockly.Msg.VARIABLE_ALREADY_EXISTS_FOR_ANOTHER_TYPE.replace('%1',
+                newName.toLowerCase()).replace('%2', newVariable.type),
+                function() {
+                  promptAndCheckWithAlert(newName);  // Recurse
+                });
+          }
+          else if (!Blockly.Procedures.isNameUsed(newName, workspace)) {
+            Blockly.alert(Blockly.Msg.PROCEDURE_ALREADY_EXISTS.replace('%1',
+                newName.toLowerCase()),
+                function() {
+                  promptAndCheckWithAlert(newName);  // Recurse
+                });
+          }
+          else {
+            workspace.renameVariable(variable.name, newName);
+            if (opt_callback) {
+              opt_callback(newName);
             }
           }
         } else {
@@ -397,4 +363,22 @@ Blockly.Variables.promptName = function(promptText, defaultText, callback) {
     }
     callback(newVar);
   });
+};
+
+/**
+ * Generate XML string for variable field.
+ * @param {!Blockly.VariableModel} variableModel The variable model to generate
+ *     an XML string from.
+ * @param {?string} opt_name The optional name of the field, such as "VARIABLE"
+ *     or "LIST". Defaults to "VARIABLE".
+ * @return {string} The generated XML.
+ * @private
+ */
+Blockly.Variables.generateVariableFieldXml_ = function(variableModel, opt_name) {
+  var name = opt_name || "VARIABLE";
+  var xmlString = '<field name="' + name + '" ' + 'variableType="' +
+      variableModel.type + '" id="' + variableModel.getId() + '">'+
+      variableModel.name +
+      '</field>';
+  return xmlString;
 };

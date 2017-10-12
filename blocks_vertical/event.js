@@ -25,6 +25,7 @@ goog.provide('Blockly.Blocks.event');
 goog.require('Blockly.Blocks');
 goog.require('Blockly.Colours');
 goog.require('Blockly.constants');
+goog.require('Blockly.ScratchBlocks.VerticalExtensions');
 
 
 Blockly.Blocks['event_whenflagclicked'] = {
@@ -39,19 +40,14 @@ Blockly.Blocks['event_whenflagclicked'] = {
       "args0": [
         {
           "type": "field_image",
-          "src": Blockly.mainWorkspace.options.pathToMedia + "icons/event_whenflagclicked.svg",
+          "src": Blockly.mainWorkspace.options.pathToMedia + "green-flag.svg",
           "width": 24,
           "height": 24,
-          "alt": "flag",
-          "flip_rtl": true
+          "alt": "flag"
         }
       ],
-      "inputsInline": true,
-      "nextStatement": null,
       "category": Blockly.Categories.event,
-      "colour": Blockly.Colours.event.primary,
-      "colourSecondary": Blockly.Colours.event.secondary,
-      "colourTertiary": Blockly.Colours.event.tertiary
+      "extensions": ["colours_event", "shape_hat"]
     });
   }
 };
@@ -64,12 +60,8 @@ Blockly.Blocks['event_whenthisspriteclicked'] = {
   init: function() {
     this.jsonInit({
       "message0": "when this sprite clicked",
-      "inputsInline": true,
-      "nextStatement": null,
       "category": Blockly.Categories.event,
-      "colour": Blockly.Colours.event.primary,
-      "colourSecondary": Blockly.Colours.event.secondary,
-      "colourTertiary": Blockly.Colours.event.tertiary
+      "extensions": ["colours_event", "shape_hat"]
     });
   }
 };
@@ -94,12 +86,8 @@ Blockly.Blocks['event_whenbroadcastreceived'] = {
           ]
         }
       ],
-      "inputsInline": true,
-      "nextStatement": null,
       "category": Blockly.Categories.event,
-      "colour": Blockly.Colours.event.primary,
-      "colourSecondary": Blockly.Colours.event.secondary,
-      "colourTertiary": Blockly.Colours.event.tertiary
+      "extensions": ["colours_event", "shape_hat"]
     });
   }
 };
@@ -121,12 +109,8 @@ Blockly.Blocks['event_whenbackdropswitchesto'] = {
           ]
         }
       ],
-      "inputsInline": true,
-      "nextStatement": null,
       "category": Blockly.Categories.event,
-      "colour": Blockly.Colours.event.primary,
-      "colourSecondary": Blockly.Colours.event.secondary,
-      "colourTertiary": Blockly.Colours.event.tertiary
+      "extensions": ["colours_event", "shape_hat"]
     });
   }
 };
@@ -152,12 +136,8 @@ Blockly.Blocks['event_whengreaterthan'] = {
           "name": "VALUE"
         }
       ],
-      "inputsInline": true,
-      "nextStatement": null,
       "category": Blockly.Categories.event,
-      "colour": Blockly.Colours.event.primary,
-      "colourSecondary": Blockly.Colours.event.secondary,
-      "colourTertiary": Blockly.Colours.event.tertiary
+      "extensions": ["colours_event", "shape_hat"]
     });
   }
 };
@@ -182,12 +162,10 @@ Blockly.Blocks['event_broadcast_menu'] = {
             ]
           }
         ],
-        "inputsInline": true,
-        "output": "String",
         "colour": Blockly.Colours.event.secondary,
         "colourSecondary": Blockly.Colours.event.secondary,
         "colourTertiary": Blockly.Colours.event.tertiary,
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND
+        "extensions": ["output_string"]
       });
   }
 };
@@ -207,13 +185,8 @@ Blockly.Blocks['event_broadcast'] = {
           "name": "BROADCAST_OPTION"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.event,
-      "colour": Blockly.Colours.event.primary,
-      "colourSecondary": Blockly.Colours.event.secondary,
-      "colourTertiary": Blockly.Colours.event.tertiary
+      "extensions": ["colours_event", "shape_statement"]
     });
   }
 };
@@ -232,13 +205,8 @@ Blockly.Blocks['event_broadcastandwait'] = {
           "name": "BROADCAST_OPTION"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.event,
-      "colour": Blockly.Colours.event.primary,
-      "colourSecondary": Blockly.Colours.event.secondary,
-      "colourTertiary": Blockly.Colours.event.tertiary
+      "extensions": ["colours_event", "shape_statement"]
     });
   }
 };
@@ -302,12 +270,8 @@ Blockly.Blocks['event_whenkeypressed'] = {
           ]
         }
       ],
-      "inputsInline": true,
-      "nextStatement": null,
       "category": Blockly.Categories.event,
-      "colour": Blockly.Colours.event.primary,
-      "colourSecondary": Blockly.Colours.event.secondary,
-      "colourTertiary": Blockly.Colours.event.tertiary
+      "extensions": ["colours_event", "shape_hat"]
     });
   }
 };

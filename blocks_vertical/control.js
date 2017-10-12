@@ -24,6 +24,7 @@ goog.provide('Blockly.Blocks.control');
 
 goog.require('Blockly.Blocks');
 goog.require('Blockly.Colours');
+goog.require('Blockly.ScratchBlocks.VerticalExtensions');
 
 
 Blockly.Blocks['control_forever'] = {
@@ -48,19 +49,15 @@ Blockly.Blocks['control_forever'] = {
       "args2": [
         {
           "type": "field_image",
-          "src": Blockly.mainWorkspace.options.pathToMedia + "/c_arrow.svg",
-          "width": 16,
-          "height": 16,
+          "src": Blockly.mainWorkspace.options.pathToMedia + "repeat.svg",
+          "width": 24,
+          "height": 24,
           "alt": "*",
           "flip_rtl": true
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
       "category": Blockly.Categories.control,
-      "colour": Blockly.Colours.control.primary,
-      "colourSecondary": Blockly.Colours.control.secondary,
-      "colourTertiary": Blockly.Colours.control.tertiary
+      "extensions": ["colours_control", "shape_end"]
     });
   }
 };
@@ -93,20 +90,15 @@ Blockly.Blocks['control_repeat'] = {
       "args2": [
         {
           "type": "field_image",
-          "src": Blockly.mainWorkspace.options.pathToMedia + "/c_arrow.svg",
-          "width": 16,
-          "height": 16,
+          "src": Blockly.mainWorkspace.options.pathToMedia + "repeat.svg",
+          "width": 24,
+          "height": 24,
           "alt": "*",
           "flip_rtl": true
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.control,
-      "colour": Blockly.Colours.control.primary,
-      "colourSecondary": Blockly.Colours.control.secondary,
-      "colourTertiary": Blockly.Colours.control.tertiary
+      "extensions": ["colours_control", "shape_statement"]
     });
   }
 };
@@ -134,13 +126,8 @@ Blockly.Blocks['control_if'] = {
           "name": "SUBSTACK"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.control,
-      "colour": Blockly.Colours.control.primary,
-      "colourSecondary": Blockly.Colours.control.secondary,
-      "colourTertiary": Blockly.Colours.control.tertiary
+      "extensions": ["colours_control", "shape_statement"]
     });
   }
 };
@@ -176,13 +163,8 @@ Blockly.Blocks['control_if_else'] = {
           "name": "SUBSTACK2"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.control,
-      "colour": Blockly.Colours.control.primary,
-      "colourSecondary": Blockly.Colours.control.secondary,
-      "colourTertiary": Blockly.Colours.control.tertiary
+      "extensions": ["colours_control", "shape_statement"]
     });
   }
 };
@@ -248,13 +230,8 @@ Blockly.Blocks['control_wait'] = {
           "name": "DURATION"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.control,
-      "colour": Blockly.Colours.control.primary,
-      "colourSecondary": Blockly.Colours.control.secondary,
-      "colourTertiary": Blockly.Colours.control.tertiary
+      "extensions": ["colours_control", "shape_statement"]
     });
   }
 };
@@ -274,13 +251,8 @@ Blockly.Blocks['control_wait_until'] = {
           "check": "Boolean"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.control,
-      "colour": Blockly.Colours.control.primary,
-      "colourSecondary": Blockly.Colours.control.secondary,
-      "colourTertiary": Blockly.Colours.control.tertiary
+      "extensions": ["colours_control", "shape_statement"]
     });
   }
 };
@@ -311,20 +283,15 @@ Blockly.Blocks['control_repeat_until'] = {
       "args2": [
         {
           "type": "field_image",
-          "src": Blockly.mainWorkspace.options.pathToMedia + "/c_arrow.svg",
-          "width": 16,
-          "height": 16,
+          "src": Blockly.mainWorkspace.options.pathToMedia + "repeat.svg",
+          "width": 24,
+          "height": 24,
           "alt": "*",
           "flip_rtl": true
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.control,
-      "colour": Blockly.Colours.control.primary,
-      "colourSecondary": Blockly.Colours.control.secondary,
-      "colourTertiary": Blockly.Colours.control.tertiary
+      "extensions": ["colours_control", "shape_statement"]
     });
   }
 };
@@ -340,12 +307,8 @@ Blockly.Blocks['control_start_as_clone'] = {
       "message0": "when I start as a clone",
       "args0": [
       ],
-      "inputsInline": true,
-      "nextStatement": null,
       "category": Blockly.Categories.control,
-      "colour": Blockly.Colours.control.primary,
-      "colourSecondary": Blockly.Colours.control.secondary,
-      "colourTertiary": Blockly.Colours.control.tertiary
+      "extensions": ["colours_control", "shape_hat"]
     });
   }
 };
@@ -368,12 +331,7 @@ Blockly.Blocks['control_create_clone_of_menu'] = {
             ]
           }
         ],
-        "inputsInline": true,
-        "output": "String",
-        "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
-        "colour": Blockly.Colours.control.secondary,
-        "colourSecondary": Blockly.Colours.control.secondary,
-        "colourTertiary": Blockly.Colours.control.tertiary
+        "extensions": ["colours_control", "output_string"]
       });
   }
 };
@@ -393,13 +351,8 @@ Blockly.Blocks['control_create_clone_of'] = {
           "name": "CLONE_OPTION"
         }
       ],
-      "inputsInline": true,
-      "previousStatement": null,
-      "nextStatement": null,
       "category": Blockly.Categories.control,
-      "colour": Blockly.Colours.control.primary,
-      "colourSecondary": Blockly.Colours.control.secondary,
-      "colourTertiary": Blockly.Colours.control.tertiary
+      "extensions": ["colours_control", "shape_statement"]
     });
   }
 };
@@ -414,12 +367,8 @@ Blockly.Blocks['control_delete_this_clone'] = {
       "message0": "delete this clone",
       "args0": [
       ],
-      "inputsInline": true,
-      "previousStatement": null,
       "category": Blockly.Categories.control,
-      "colour": Blockly.Colours.control.primary,
-      "colourSecondary": Blockly.Colours.control.secondary,
-      "colourTertiary": Blockly.Colours.control.tertiary
+      "extensions": ["colours_control", "shape_end"]
     });
   }
 };

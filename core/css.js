@@ -110,52 +110,17 @@ Blockly.Css.inject = function(hasCss, pathToMedia) {
   var cssTextNode = document.createTextNode(text);
   cssNode.appendChild(cssTextNode);
   Blockly.Css.styleSheet_ = cssNode.sheet;
-  Blockly.Css.setCursor(Blockly.Css.Cursor.OPEN);
 };
 
 /**
  * Set the cursor to be displayed when over something draggable.
+ * See See https://github.com/google/blockly/issues/981 for context.
  * @param {Blockly.Css.Cursor} cursor Enum.
+ * @deprecated April 2017.
  */
 Blockly.Css.setCursor = function(cursor) {
-  if (goog.userAgent.MOBILE || goog.userAgent.ANDROID || goog.userAgent.IPAD) {
-    // Don't try to switch the mouse cursor on a mobile device.
-    // This is an optimization - since we almost never have cursors on mobile anyway.
-    return;
-  }
-  if (Blockly.Css.currentCursor_ == cursor) {
-    return;
-  }
-  Blockly.Css.currentCursor_ = cursor;
-  var url;
-  if (cursor == Blockly.Css.Cursor.OPEN) {
-    // Scratch-specific: use CSS default cursor instead of "open hand."
-    url = 'default';
-  } else {
-    url = 'url(' + Blockly.Css.mediaPath_ + '/' + cursor + '.cur), auto';
-  }
-  // There are potentially hundreds of draggable objects.  Changing their style
-  // properties individually is too slow, so change the CSS rule instead.
-  var rule = '.blocklyDraggable {\n  cursor: ' + url + ';\n}\n';
-  Blockly.Css.styleSheet_.deleteRule(0);
-  Blockly.Css.styleSheet_.insertRule(rule, 0);
-  // There is probably only one toolbox, so just change its style property.
-  var toolboxen = document.getElementsByClassName('blocklyToolboxDiv');
-  for (var i = 0, toolbox; toolbox = toolboxen[i]; i++) {
-    if (cursor == Blockly.Css.Cursor.DELETE) {
-      toolbox.style.cursor = url;
-    } else {
-      toolbox.style.cursor = '';
-    }
-  }
-  // Set cursor on the whole document, so that rapid movements
-  // don't result in cursor changing to an arrow momentarily.
-  var html = document.body.parentNode;
-  if (cursor == Blockly.Css.Cursor.OPEN) {
-    html.style.cursor = '';
-  } else {
-    html.style.cursor = url;
-  }
+  console.warn('Deprecated call to Blockly.Css.setCursor.' +
+    'See https://github.com/google/blockly/issues/981 for context');
 };
 
 /**
@@ -187,6 +152,7 @@ Blockly.Css.CONTENT = [
     'height: 100%;',
     'position: relative;',
     'overflow: hidden;', /* So blocks in drag surface disappear at edges */
+    'touch-action: none',
   '}',
 
   '.blocklyNonSelectable {',
@@ -397,6 +363,59 @@ Blockly.Css.CONTENT = [
     // 'stroke-width: 3px;',
   '}',
 
+  '.blocklySelected>.blocklyPathLight {',
+    'display: none;',
+  '}',
+
+  '.blocklyDraggable {',
+    /* backup for browsers (e.g. IE11) that don't support grab */
+    'cursor: url("<<<PATH>>>/handopen.cur"), auto;',
+    'cursor: grab;',
+    'cursor: -webkit-grab;',
+    'cursor: -moz-grab;',
+  '}',
+
+   '.blocklyDragging {',
+    /* backup for browsers (e.g. IE11) that don't support grabbing */
+    'cursor: url("<<<PATH>>>/handclosed.cur"), auto;',
+    'cursor: grabbing;',
+    'cursor: -webkit-grabbing;',
+    'cursor: -moz-grabbing;',
+  '}',
+  /* Changes cursor on mouse down. Not effective in Firefox because of
+    https://bugzilla.mozilla.org/show_bug.cgi?id=771241 */
+  '.blocklyDraggable:active {',
+    /* backup for browsers (e.g. IE11) that don't support grabbing */
+    'cursor: url("<<<PATH>>>/handclosed.cur"), auto;',
+    'cursor: grabbing;',
+    'cursor: -webkit-grabbing;',
+    'cursor: -moz-grabbing;',
+  '}',
+  /* Change the cursor on the whole drag surface in case the mouse gets
+     ahead of block during a drag. This way the cursor is still a closed hand.
+   */
+  '.blocklyBlockDragSurface .blocklyDraggable {',
+    /* backup for browsers (e.g. IE11) that don't support grabbing */
+    'cursor: url("<<<PATH>>>/handclosed.cur"), auto;',
+    'cursor: grabbing;',
+    'cursor: -webkit-grabbing;',
+    'cursor: -moz-grabbing;',
+  '}',
+
+  '.blocklyDragging.blocklyDraggingDelete {',
+    'cursor: url("<<<PATH>>>/handdelete.cur"), auto;',
+  '}',
+
+  '.blocklyToolboxDelete {',
+    'cursor: url("<<<PATH>>>/handdelete.cur"), auto;',
+  '}',
+
+  '.blocklyDragging>.blocklyPath,',
+  '.blocklyDragging>.blocklyPathLight {',
+    'fill-opacity: 1.0;',
+    'stroke-opacity: 1.0;',
+  '}',
+
   '.blocklyDragging>.blocklyPath {',
   '}',
 
@@ -440,17 +459,30 @@ Blockly.Css.CONTENT = [
     'position: absolute;',
     'z-index: 20;',
   '}',
+
+  '.blocklyFlyout {',
+    'position: absolute;',
+    'z-index: 20;',
+  '}',
   '.blocklyFlyoutButton {',
-    'fill: #888;',
-    'cursor: default;',
+    'fill: none;',
+  '}',
+
+  '.blocklyFlyoutButtonBackground {',
+      'stroke: #c6c6c6;',
+  '}',
+
+  '.blocklyFlyoutButton .blocklyText {',
+    'fill: $colour_text;',
   '}',
 
   '.blocklyFlyoutButtonShadow {',
-    'fill: #666;',
+    'fill: none;',
   '}',
 
   '.blocklyFlyoutButton:hover {',
-    'fill: #aaa;',
+    'fill: white;',
+    'cursor: pointer;',
   '}',
 
   '.blocklyFlyoutLabel {',
@@ -462,14 +494,17 @@ Blockly.Css.CONTENT = [
   '}',
 
   '.blocklyFlyoutLabelText {',
-    'fill: #000;',
+    'font-family: "Helvetica Neue", Helvetica, sans-serif;',
+    'font-size: 14pt;',
+    'fill: #575E75;',
+    'font-weight: bold;',
   '}',
 
   /*
     Don't allow users to select text.  It gets annoying when trying to
     drag a block and selected text moves instead.
   */
-  '.blocklySvg text, .blocklyBlockDragSurface text {',
+  '.blocklySvg text, .blocklyBlockDragSurface text, .blocklyFlyout text, .blocklyToolboxDiv text {',
     'user-select: none;',
     '-moz-user-select: none;',
     '-webkit-user-select: none;',
@@ -592,26 +627,42 @@ Blockly.Css.CONTENT = [
   '}',
 
   '.blocklyAngleCircle {',
-    'stroke: #444;',
+    'stroke: ' + Blockly.Colours.motion.tertiary + ';',
     'stroke-width: 1;',
-    'fill: #ddd;',
-    'fill-opacity: .8;',
+    'fill: ' + Blockly.Colours.motion.secondary + ';',
   '}',
 
-  '.blocklyAngleMarks {',
-    'stroke: #444;',
+  '.blocklyAngleCenterPoint {',
+    'stroke: #fff;',
     'stroke-width: 1;',
+    'fill: #fff;',
+  '}',
+
+  '.blocklyAngleDragHandle {',
+    'stroke: #fff;',
+    'stroke-width: 5;',
+    'stroke-opacity: 0.25;',
+    'fill: #fff;',
+    'cursor: pointer;',
+  '}',
+
+
+  '.blocklyAngleMarks {',
+    'stroke: #fff;',
+    'stroke-width: 1;',
+    'stroke-opacity: 0.5;',
   '}',
 
   '.blocklyAngleGauge {',
-    'fill: #f88;',
-    'fill-opacity: .8;',
+    'fill: #fff;',
+    'fill-opacity: 0.20;',
   '}',
 
   '.blocklyAngleLine {',
-    'stroke: #f00;',
-    'stroke-width: 2;',
+    'stroke: #fff;',
+    'stroke-width: 1;',
     'stroke-linecap: round;',
+    'pointer-events: none;',
   '}',
 
   '.blocklyContextMenu {',
@@ -734,58 +785,60 @@ Blockly.Css.CONTENT = [
     'vertical-align: middle;',
   '}',
 
+  '.blocklyToolboxDelete .blocklyTreeLabel {',
+    'cursor: url("<<<PATH>>>/handdelete.cur"), auto;',
+  '}',
+
   '.blocklyTreeSelected .blocklyTreeLabel {',
     'color: #fff;',
   '}',
 
-  /* Copied from: goog/css/colorpicker-simplegrid.css */
-  /*
-   * Copyright 2007 The Closure Library Authors. All Rights Reserved.
-   *
-   * Use of this source code is governed by the Apache License, Version 2.0.
-   * See the COPYING file for details.
-   */
-
-  /* Author: pupius@google.com (Daniel Pupius) */
-
-  /*
-    Styles to make the colorpicker look like the old gmail color picker
-    NOTE: without CSS scoping this will override styles defined in palette.css
-  */
-  '.blocklyWidgetDiv .goog-palette {',
-    'outline: none;',
-    'cursor: default;',
-  '}',
-
-  '.blocklyWidgetDiv .goog-palette-table {',
-    'border-collapse: collapse;',
-  '}',
-
-  '.blocklyWidgetDiv .goog-palette-cell {',
-    'height: 13px;',
-    'width: 15px;',
-    'margin: 0;',
-    'border: 0;',
-    'text-align: center;',
-    'vertical-align: middle;',
-    'font-size: 1px;',
-  '}',
-
-  '.blocklyWidgetDiv .goog-palette-colorswatch {',
+  '.blocklyDropDownDiv .goog-slider-horizontal {',
+    'margin: 8px;',
+    'height: 22px;',
+    'width: 150px;',
     'position: relative;',
-    'height: 13px;',
-    'width: 15px;',
+    'outline: none;',
+    'border-radius: 11px;',
+    'margin-bottom: 20px;',
   '}',
 
-  '.blocklyWidgetDiv .goog-palette-cell-hover .goog-palette-colorswatch {',
-    'border: 1px solid #FFF;',
-    'box-sizing: border-box;',
+  '.blocklyDropDownDiv .goog-slider-horizontal .goog-slider-thumb {',
+    'width: 26px;',
+    'height: 26px;',
+    'margin-top: -1px;',
+    'position: absolute;',
+    'background-color: white;',
+    'border-radius: 100%;',
+    '-webkit-box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);',
+    '-moz-box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);',
+    'box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);',
   '}',
 
-  '.blocklyWidgetDiv .goog-palette-cell-selected .goog-palette-colorswatch {',
-    'border: 1px solid #000;',
-    'box-sizing: border-box;',
-    'color: #fff;',
+  '.scratchEyedropper {',
+    'background: none;',
+    'outline: none;',
+    'border: none;',
+    'width: 100%;',
+    'text-align: center;',
+    'border-top: 1px solid #ddd;',
+    'padding-top: 5px;',
+    'cursor: pointer;',
+  '}',
+
+  '.scratchColourPickerLabel {',
+    'font-family: "Helvetica Neue", Helvetica, sans-serif;',
+    'font-size: 0.65rem;',
+    'color: $colour_toolboxText;',
+    'margin: 8px;',
+  '}',
+
+  '.scratchColourPickerLabelText {',
+    'font-weight: bold;',
+  '}',
+
+  '.scratchColourPickerReadout {',
+    'margin-left: 10px;',
   '}',
 
   /* Copied from: goog/css/menu.css */
@@ -815,7 +868,6 @@ Blockly.Css.CONTENT = [
     'position: absolute;',
     'overflow-y: auto;',
     'overflow-x: hidden;',
-    'max-height: 100%;',
     'z-index: 20000;',  /* Arbitrary, but some apps depend on it... */
   '}',
 
@@ -1036,55 +1088,83 @@ Blockly.Css.CONTENT = [
   '}',
 
   '.blocklyFlyoutCheckbox {',
-    'fill: red;',
+    'fill: white;',
+    'stroke: #c8c8c8;',
   '}',
 
   '.blocklyFlyoutCheckbox.checked {',
-    'fill: blue;',
+    'fill: ' + Blockly.Colours.motion.primary + ';',
+    'stroke: ' + Blockly.Colours.motion.tertiary + ';',
+  '}',
+
+  '.blocklyFlyoutCheckboxPath {',
+    'stroke: white;',
+    'stroke-width: 3;',
+    'stroke-linecap: round;',
+    'stroke-linejoin: round;',
   '}',
 
   '.scratchCategoryMenu {',
-    'width: 250px;',
+    'width: 60px;',
     'background: $colour_toolbox;',
     'color: $colour_toolboxText;',
-    'font-size: .9em;',
+    'font-size: .7em;',
     'user-select: none;',
     '-webkit-user-select: none;',
     '-moz-user-select: none;',
     '-ms-user-select: none;',
   '}',
 
-  '.scratchCategoryRow {',
-    'width: 50%;',
+  '.scratchCategoryMenuHorizontal {',
+    'width: 100%;',
+    'height: 50px;',
+    'background: $colour_toolbox;',
+    'color: $colour_toolboxText;',
+    'font-size: .7em;',
+    'user-select: none;',
+    '-webkit-user-select: none;',
+    '-moz-user-select: none;',
+    '-ms-user-select: none;',
+  '}',
+
+  '.scratchCategoryMenuHorizontal .scratchCategoryMenuRow {',
+    'float: left;',
+    'margin: 3px;',
+  '}',
+
+  '.scratchCategoryMenuRow {',
+  '}',
+
+  '.scratchCategoryMenu .scratchCategoryMenuRow + .scratchCategoryMenuRow:before {',
+    'display: block;',
+    'border-top: 1px solid #ddd;',
+    'content: "";',
+    'width: 60%;',
+    'margin: 4px auto;',
   '}',
 
   '.scratchCategoryMenuItem {',
-    'padding: 4px;',
-    'width: 50%;',
+    'padding: 6px 0px;',
     'cursor: pointer;',
+    'margin: 0px 2px;',
+    'text-align: center;',
+  '}',
+
+  '.scratchCategoryMenuHorizontal .scratchCategoryMenuItem {',
+    'padding: 6px 5px;',
   '}',
 
   '.scratchCategoryMenuItem.categorySelected {',
     'background: $colour_toolboxSelected;',
-    'border-radius: 16px;',
+    'border-radius: 6px;',
   '}',
 
-  '.scratchCategoryItemBubbleLTR {',
-    'width: 14px;',
-    'height: 14px;',
+  '.scratchCategoryItemBubble {',
+    'width: 16px;',
+    'height: 16px;',
     'border: 1px solid;',
-    'border-radius: 8px;',
-    'float: left;',
-    'margin-right: 8px;',
-  '}',
-
-  '.scratchCategoryItemBubbleRTL {',
-    'width: 14px;',
-    'height: 14px;',
-    'border: 1px solid;',
-    'border-radius: 8px;',
-    'float: right;',
-    'margin-left: 8px;',
+    'border-radius: 100%;',
+    'margin: 0 auto 3px;',
   '}',
 
   '.scratchCategoryMenuItem:hover {',
